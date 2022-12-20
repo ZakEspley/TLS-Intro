@@ -7,11 +7,6 @@ from TLS import *
 import os
 import datetime
 
-
-
-
-
-
 def HMaker(_ω0:float, _v:float, _ω:float, _Ωx:float, _Ωz:float) -> callable:
     """
     The HMaker function returns a Hamiltonian that takes one argument, t. This can then be fed into the EulerTimeEvolve
@@ -41,7 +36,7 @@ if __name__ == "__main__":
 
     vmin = 4.8e9
     vmax = 5.2e9
-    number_of_frequencies = 101
+    number_of_frequencies = 51
     frequencies = np.linspace(vmin, vmax, number_of_frequencies)
     #Default Frequency in Hz
     _ω0 = 1e9
@@ -52,7 +47,7 @@ if __name__ == "__main__":
     #Time to run for in seconds
     _tmax = 200e-9
     # Rabi Frequency in Hz
-    _Ωx = 63e6
+    _Ωx = np.linspace(10e6, 250e6, 25)
     #AC Stark Shift Frquency in Hz
     _Ωz = 0
 
@@ -82,11 +77,12 @@ if __name__ == "__main__":
     run.attrs.create("Ωz", _Ωz)
     run.attrs.create("v", frequencies)
 
-    for _v in frequencies:
-        counter2 = 1
-        H = HMaker(_ω0,_v, _ω, _Ωx, _Ωz)
-        probability_amplitudes = RungeKuttaTimeEvolve(H, dt, tmax)
-        run.create_dataset(f"f={prefix(_v,3)}Hz".replace(" ", ""), data=probability_amplitudes, track_order=True)
+    for Ωx in _Ωx:
+        for _v in frequencies:
+            counter2 = 1
+            H = HMaker(_ω0,_v, _ω, Ωx, _Ωz)
+            probability_amplitudes = RungeKuttaTimeEvolve(H, dt, tmax)
+            run.create_dataset(f"f={prefix(_v,3)}Hz".replace(" ", ""), data=probability_amplitudes, track_order=True, compression="gzip", compression_opts=7)
 
     data.close()
 

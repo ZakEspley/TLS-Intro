@@ -3,6 +3,7 @@ from numba import njit
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 import h5py as h5
+from scipy.optimize import curve_fit
 
 ## Constants and Operators:
 Sx = 1 / 2 * np.array([[0, 1],
@@ -167,7 +168,45 @@ def plotProbabilities_Sweep(filename: str, group: str, runname: str, title: str,
 
     file.close()
     if save:
-        fig.savefig("Title.png")
+        fig.savefig(f"{title}.png")
+    else:
+        plt.show()
+
+def plotMaxProbabilities(filename: str, group: str, runname: str, title: str, xunits: str, groundstate=False,
+                            excitedstate=True, totalProbability=False, save=False, spacing:int=1):
+    file = h5.File(filename, "r")
+    data = file[group][runname]
+    dt = data.attrs.get("dt")
+    tmax = data.attrs.get("tmax")
+    vs = data.attrs.get("v")
+    n = len(vs)
+    ω = data.attrs.get("ω")
+    ω0 = data.attrs.get("ω0")
+    vmin = np.min(vs) / ω0
+    vmax = np.max(vs) / ω0
+
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.subplots()
+    ax.set_xlabel(f"Driving Frequency [{xunits}]")
+    ax.set_ylabel("Excited State Probability")
+    ax.set_title(title)
+    maxProbablities = []
+    for keys, probabilities in data.items():
+        maxP = np.max(np.abs(probabilities[1]) ** 2)
+        maxProbablities.append(maxP)
+    file.close()
+
+
+    popt, pcov = curve_fit(Lorentzian, vs/ω0, maxProbablities, p0=[1, 5, 0.5])
+    frequencies = np.linspace(vmin - 0.2, vmax + 0.2, 1000)
+    Lprobs = Lorentzian(frequencies, popt[0], popt[1], popt[2])
+    ax.plot(vs / ω0, maxProbablities, "o")
+    ax.plot(frequencies, Lprobs)
+    ax.text(4.6,0.9,"Fitting Function:\n A/pi * 1/2W / ( (f-f0)^2 + (1/2W)^2 )")
+    ax.text(4.6,0.6, f"A = {popt[0]:.2f}\nf0={popt[1]:.2f}GHz\nW={popt[2]:.2f}GHz")
+    file.close()
+    if save:
+        fig.savefig(f"{title}.png")
     else:
         plt.show()
 
