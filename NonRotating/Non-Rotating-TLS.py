@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.constants import hbar as h
 import matplotlib.pyplot as plt
-from Useful_Functions import prefix
+from TLS import prefix
 # Set the default text font size
 plt.rc('font', size=16)
 # Set the axes title font size
