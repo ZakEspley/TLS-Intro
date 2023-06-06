@@ -22,32 +22,41 @@ plt.rc('figure', titlesize=20)
 # plt.rc("text", usetex=True)
 
 filename = "TLS-data.h5"
-group = "2022-12-24"
-runname = "run4"
+group = "2023-03-28"
+runname = "run1"
 xunits = "GHz"
 title = "Rabi Sweep State Probability"
 
 if __name__ == "__main__":
-    # file = h5.File(filename, "r")
-    # data = file[group][runname]
-    # dt = data.attrs.get("dt")
-    # tmax = data.attrs.get("tmax")
-    # vs = data.attrs.get("v")
-    # n = len(vs)
-    # ω = data.attrs.get("ω")
-    # ω0 = data.attrs.get("ω0")
-    # vmin = np.min(vs) / ω0
-    # vmax = np.max(vs) / ω0
-    # _Ωx = data.attrs.get("Ωx")
-    # fig = plt.figure(figsize=(16,9))
-    # ax = fig.add_subplot(projection="3d")
-    # ax.set_xlabel(f"Driving Frequency [{xunits}]")
-    # ax.set_ylabel(f"Rabi Frequency [{xunits}]")
-    # ax.set_zlabel("Excited State Probability")
-    # ax.set_title(title)
-    # v = vs/ω0
-    # Ωx = _Ωx/ω0
-    # v, Ωx = np.meshgrid(v,Ωx)
+    file = h5.File(filename, "r")
+    data = file[group][runname]
+    dt = data.attrs.get("dt")
+    tmax = data.attrs.get("tmax")
+    vs = data.attrs.get("v")
+    n = len(vs)
+    ω = data.attrs.get("ω")
+    ω0 = data.attrs.get("ω0")
+    vmin = np.min(vs) / ω0
+    vmax = np.max(vs) / ω0
+    Ωxs = data.attrs.get("Ωx")
+    fig = plt.figure(figsize=(16,9))
+    ax = fig.add_subplot(projection="3d")
+    ax.set_xlabel(f"Driving Frequency [{xunits}]")
+    ax.set_ylabel(f"Rabi Frequency [MHz]")
+    ax.set_zlabel("Excited State Probability")
+    ax.set_title(title)
+    v = vs/ω0
+    Ωx = Ωxs/ω0
+    v, Ωx = np.meshgrid(v,Ωx)
+    print(v[:5,:5])
+    print(Ωx[:5, :5])
+    # for key, rabifrequency in data.items():
+    #     dataset = data[key]
+    #     rabiF = rabifrequency.attrs.get("Ωx")
+    #     Ωxindex = np.where(Ωx == rabiF)[0]
+    #     for key2, probabilities in dataset.items():
+
+            
     # maxProbablities = np.empty(v.shape)
     # rabiF = -1
     # rabiCounter = -2
@@ -64,15 +73,18 @@ if __name__ == "__main__":
     # file.close()
     # ax.plot_surface(v, Ωx, maxProbablities)
     # plt.show()
+
+
     plotProbabilities_Sweep(
         filename="TLS-data.h5",
         group=group,
         runname=runname,
+        Ωx="Ωx=250.0 M",
         title="Frequency Sweep",
         xunits="ns",
-        spacing = 1,
-        totalProbability=True,
-        excitedstate=False
+        spacing = 10,
+        totalProbability=False,
+        excitedstate=True
     )
     # plotMaxProbabilities(
     #     filename="TLS-data.h5",

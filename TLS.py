@@ -1,10 +1,13 @@
 import numpy as np
-from numba import njit, prange, jit
+from numba import njit, prange, jit, objmode
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 import h5py as h5
 from scipy.optimize import curve_fit
 import datetime
+from scipy.linalg import expm
+from numba_progress import ProgressBar
+
 
 ## Constants and Operators:
 Sx = 1 / 2 * np.array([[0, 1],
@@ -19,6 +22,10 @@ Sz = 1 / 2 * np.array([[1.0, 0],
 
 Sp = (Sx + 1j * Sy) / 2
 Sm = (Sx - 1j * Sy) / 2
+
+I = np.array([[1.0, 0],
+              [0, 1.0]],
+                      dtype=complex)
 
 
 def prefix(x, digits=None):
@@ -136,13 +143,43 @@ def EulerTimeEvolve(H: callable, dt: float, tmax: float, groundStateInitial: com
         data[i] = cs.T
     return data.T
 
+@njit
+def TimeOrderedHeisenbergTimeEvolve(H: callable, dt: float, tmax: float, groundStateInitial: complex = 1, progress: ProgressBar = None) -> np.ndarray:
+    """
+    The Time order Heisenberrg time evolve function takes a Hamiltonian function, a time step, and the total time to evolve
+    the system for and the initial condition for the ground state. It returns an array of the complex amplitudes at each timestep. The first column is ground state probability
+    and the second column is the excited state probability amplitude.
 
-def plotProbabilities_Sweep(filename: str, group: str, runname: str, title: str, xunits: str, groundstate=False,
+    :param H:callable: Define the hamiltonian
+    :param dt:float: Set the time step
+    :param tmax:float: Set the time to which we want to evolve the system
+    :param groundStateInitial:complex=1: Set the initial ground state of the system
+    :return: A tuple of two arrays
+    :doc-author: Trelent
+    """
+    c10 = groundStateInitial + 0j
+    c20 = (1 - c10 ** 2) + 0j
+    cs = np.array([[c10], [c20]])
+    data = np.empty((int(tmax / dt) + 2, 2), dtype=np.cdouble)
+    data[0] = cs.T
+    times = np.linspace(0, tmax, int(tmax / dt) + 1)
+    Hprev = I
+    for i, t in enumerate(times):
+        # Euler
+        with objmode(Hprev="complex128[:,:]"):
+            Hprev = Hprev @ expm(-1j * H(t) * dt)
+        d = Hprev@cs
+        data[i+1] = d.T
+        if progress is not None:
+            progress.update(1)
+    return data.T
+
+def plotProbabilities_Sweep(filename: str, group: str, runname: str, Ωx:str, title: str, xunits: str, groundstate=False,
                             excitedstate=True, totalProbability=False, save=False, spacing: int = 1):
     """
     The plotProbabilities_Sweep function plots the probabilities of the ground and excited states as a function of time
     for each driving frequency in a sweep. The plot is color-coded according to the driving frequency, following the
-    rainbow, lower frequencies are redder, and higher freqeuncies are purple. The dashed lines represent the probability
+    rainbow, lower frequencies are redder, and higher frequencies are purple. The dashed lines represent the probability
     of being in the ground state at that time, while the solid line represents being in an excited state.
 
     :param filename:str: Specify the file name of the hdf5 file
@@ -180,7 +217,8 @@ def plotProbabilities_Sweep(filename: str, group: str, runname: str, title: str,
     sm = plt.cm.ScalarMappable(norm=norm, cmap="gist_rainbow")
     fig.colorbar(sm, ax=ax, format="{x:.2f}", label=f"Driving Frequency [{prefix(ω0, 2)[-1:]}Hz]")
     i = 0
-    for keys, probabilities in data.items():
+
+    for keys, probabilities in data[Ωx].items():
         if i % spacing == 0:
             ps = np.abs(probabilities) ** 2
             if groundstate:
