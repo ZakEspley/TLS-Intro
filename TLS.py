@@ -339,6 +339,69 @@ def plotProbabilities_Sweep_Rabi(filename: str, group: str, runname: str, rabiFr
         plt.show()
 
 
+def plotProbability(filename: str, group: str, runname: str, Ωx:str, v: float, title: str, xunits: str, groundstate=False,
+                            excitedstate=True, totalProbability=False, save=False):
+    """
+    The plotProbabilities_Sweep function plots the probabilities of the ground and excited states as a function of time
+    for each driving frequency in a sweep. The plot is color-coded according to the driving frequency, following the
+    rainbow, lower frequencies are redder, and higher frequencies are purple. The dashed lines represent the probability
+    of being in the ground state at that time, while the solid line represents being in an excited state.
+
+    :param filename:str: Specify the file name of the hdf5 file
+    :param group:str: Select the group in the h5 file
+    :param runname:str: Select the data to be plotted
+    :param title:str: Set the title of the plot
+    :param xunits:str: Change the units of the x-axis
+    :param groundstate=False: Show the excited state probability
+    :param excitedstate=True: Plot the excited state probability
+    :param totalProbability=False: Plot the probability of being in the ground state and excited state separately
+    :param save=False: Save the plot as a png file
+    :return: None
+    :doc-author: Trelent
+    """
+    file = h5.File(filename, "r")
+    data = file[group][runname]
+    dt = data.attrs.get("dt")
+    tmax = data.attrs.get("tmax")
+    vs = data.attrs.get("v")
+    n = len(vs)
+    ω = data.attrs.get("ω")
+    ω0 = data.attrs.get("ω0")
+    vmin = np.min(vs) / ω0
+    vmax = np.max(vs) / ω0
+
+    times = np.linspace(0, tmax, int(tmax / dt) + 1)
+
+    def sineSqFit(t, A, v, ϕ, DC):
+        return A * (np.sin(v * t + ϕ)) ** 2 + DC
+
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.subplots()
+    ax.set_xlabel(f"Time [{xunits}]")
+    ax.set_ylabel("Probability State")
+    ax.set_title(title)
+    norm = Normalize(vmin, vmax)
+    # sm = plt.cm.ScalarMappable(norm=norm, cmap="gist_rainbow")
+    # fig.colorbar(sm, ax=ax, format="{x:.2f}", label=f"Driving Frequency [{prefix(ω0, 2)[-1:]}Hz]")
+
+    for keys, probabilities in data[Ωx].items():
+
+        if data[Ωx][keys].attrs.get("v") == v:
+            ps = np.abs(probabilities) ** 2
+            if groundstate:
+                ax.plot(times, ps[0], linestyle="dashed")
+            if excitedstate:
+                ax.plot(times, ps[1])
+                ax.plot(times, sineSqFit(times,1,0.5e8,0,0))
+            if totalProbability:
+                ax.plot(times, ps[1] + ps[0])
+    file.close()
+    if save:
+        print(f"Saving data to {title}.png")
+        fig.savefig(f"{title}.png")
+    else:
+        plt.show()
+
 def Lorentzian(x, A, x0, g):
     hg = g / 2
     return A / np.pi * hg / ((x - x0) ** 2 + hg ** 2)

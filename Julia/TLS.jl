@@ -197,9 +197,6 @@ function FrequencyRabiSweepSimulation(
     close(data)
 end
 
-function saveData(filename::str)
-
-end
 
 
 # Default Frequency in Hz
@@ -222,7 +219,7 @@ vmin = 4.8e9
 # Max Frequency in Hz
 vmax = 5.2e9
 # Number of frequencies
-nFrequencies = 51
+nFrequencies = 7
 
 # FrequencySweepSimulation(
 #     ω0,

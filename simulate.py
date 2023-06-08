@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     vmin = 4.8e9
     vmax = 5.2e9
-    number_of_frequencies = 51
+    number_of_frequencies = 7
     # frequencies = np.linspace(vmin, vmax, number_of_frequencies)
     #Default Frequency in Hz
     _ω0 = 1e9

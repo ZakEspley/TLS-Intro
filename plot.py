@@ -22,7 +22,7 @@ plt.rc('figure', titlesize=20)
 # plt.rc("text", usetex=True)
 
 filename = "TLS-data.h5"
-group = "2023-03-28"
+group = "2023-06-07"
 runname = "run1"
 xunits = "GHz"
 title = "Rabi Sweep State Probability"
@@ -75,16 +75,28 @@ if __name__ == "__main__":
     # plt.show()
 
 
-    plotProbabilities_Sweep(
+    # plotProbabilities_Sweep(
+    #     filename="TLS-data.h5",
+    #     group=group,
+    #     runname=runname,
+    #     Ωx="Ωx=250.0 M",
+    #     title="Frequency Sweep",
+    #     xunits="ns",
+    #     spacing = 2,
+    #     totalProbability=False,
+    #     excitedstate=True
+    # )
+    plotProbability(
         filename="TLS-data.h5",
         group=group,
         runname=runname,
-        Ωx="Ωx=250.0 M",
-        title="Frequency Sweep",
+        Ωx="Ωx=100.0 M",
+        v=5.0e9,
+        title="Ωx=100.0 MHz",
         xunits="ns",
-        spacing = 10,
         totalProbability=False,
-        excitedstate=True
+        excitedstate=True,
+        save=False
     )
     # plotMaxProbabilities(
     #     filename="TLS-data.h5",
