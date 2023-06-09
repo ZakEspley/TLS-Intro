@@ -93,10 +93,10 @@ if __name__ == "__main__":
         Ωx="Ωx=100.0 M",
         v=5.0e9,
         title="Ωx=100.0 MHz",
-        xunits="ns",
+        xunits="s",
         totalProbability=False,
         excitedstate=True,
-        save=False
+        save=True
     )
     # plotMaxProbabilities(
     #     filename="TLS-data.h5",

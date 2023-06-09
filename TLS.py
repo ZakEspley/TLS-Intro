@@ -392,7 +392,7 @@ def plotProbability(filename: str, group: str, runname: str, Ωx:str, v: float, 
                 ax.plot(times, ps[0], linestyle="dashed")
             if excitedstate:
                 ax.plot(times, ps[1])
-                ax.plot(times, sineSqFit(times,1,0.5e8,0,0))
+                # ax.plot(times, sineSqFit(times,1,0.5e8,0,0))
             if totalProbability:
                 ax.plot(times, ps[1] + ps[0])
     file.close()
