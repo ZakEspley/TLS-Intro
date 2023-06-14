@@ -338,6 +338,75 @@ def plotProbabilities_Sweep_Rabi(filename: str, group: str, runname: str, rabiFr
     else:
         plt.show()
 
+def plotProbabilities_Sweep_TwoField(filename: str, group: str, runname: str, title: str, xunits: str,
+                                 groundstate=False,
+                                 excitedstate=True, totalProbability=False, save=False, spacing: int = 1):
+    """
+    The plotProbabilities_Sweep function plots the probabilities of the ground and excited states as a function of time
+    for each driving frequency in a sweep. The plot is color-coded according to the driving frequency, following the
+    rainbow, lower frequencies are redder, and higher freqeuncies are purple. The dashed lines represent the probability
+    of being in the ground state at that time, while the solid line represents being in an excited state.
+
+    :param filename:str: Specify the file name of the hdf5 file
+    :param group:str: Select the group in the h5 file
+    :param runname:str: Select the data to be plotted
+    :param dv:str: Select the Rabi Frequency of the dataset.
+    :param title:str: Set the title of the plot
+    :param xunits:str: Change the units of the x-axis
+    :param groundstate=False: Show the excited state probability
+    :param excitedstate=True: Plot the excited state probability
+    :param totalProbability=False: Plot the probability of being in the ground state and excited state separately
+    :param save=False: Save the plot as a png file
+    :return: None
+    :doc-author: Trelent
+    """
+    file = h5.File(filename, "r")
+    data = file[group][runname]
+    dt = data.attrs.get("dt")
+    tmax = data.attrs.get("tmax")
+    vs = data.attrs.get("δv")
+    n = len(vs)
+    ω = data.attrs.get("ω")
+    ω0 = data.attrs.get("ω0")
+    dvmin = np.min(vs) / ω0
+    dvmax = np.max(vs) / ω0
+
+    times = np.linspace(0, tmax, int(tmax / dt) + 1)
+    colors = plt.cm.gist_rainbow(np.linspace(0, 1, n))
+
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.subplots()
+    ax.set_xlabel(f"Time [{xunits}]")
+    ax.set_ylabel("Probability State")
+    ax.set_title(title)
+    norm = Normalize(dvmin, dvmax)
+    sm = plt.cm.ScalarMappable(norm=norm, cmap="gist_rainbow")
+    fig.colorbar(sm, ax=ax, format="{x:.3f}", label=f"δv [{prefix(ω0, 2)[-1:]}Hz]")
+    i = 0
+    print(vs)
+    for dv in vs:
+        # if data[keys].attrs.get("Ωx") != rabiFrequency:
+        #     continue
+        # print(probabilities[0])
+        if i % spacing == 0:
+            dvString = f"{prefix(round(dv,4))}Hz"
+            print(dvString)
+            probabilities = data[f"δv={dvString}"]
+            ps = np.abs(probabilities) ** 2
+            if groundstate:
+                ax.plot(times, ps[0], color=colors[i], linestyle="dashed")
+            if excitedstate:
+                ax.plot(times, ps[1], color=colors[i])
+            if totalProbability:
+                ax.plot(times, ps[1] + ps[0], color=colors[i])
+        i += 1
+
+    file.close()
+    if save:
+        fig.savefig(f"{title}.png")
+    else:
+        plt.show()
+
 
 def plotProbability(filename: str, group: str, runname: str, Ωx:str, v: float, title: str, xunits: str, groundstate=False,
                             excitedstate=True, totalProbability=False, save=False):

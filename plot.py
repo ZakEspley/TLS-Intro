@@ -21,9 +21,9 @@ plt.rc('legend', fontsize=18)
 plt.rc('figure', titlesize=20)
 # plt.rc("text", usetex=True)
 
-filename = "TLS-data.h5"
-group = "2023-06-07"
-runname = "run1"
+filename = "Julia/TLS-data.h5"
+group = "2023-06-13"
+runname = "run6"
 xunits = "GHz"
 title = "Rabi Sweep State Probability"
 
@@ -32,24 +32,24 @@ if __name__ == "__main__":
     data = file[group][runname]
     dt = data.attrs.get("dt")
     tmax = data.attrs.get("tmax")
-    vs = data.attrs.get("v")
-    n = len(vs)
+    # vs = data.attrs.get("v")
+    # n = len(vs)
     ω = data.attrs.get("ω")
     ω0 = data.attrs.get("ω0")
-    vmin = np.min(vs) / ω0
-    vmax = np.max(vs) / ω0
-    Ωxs = data.attrs.get("Ωx")
-    fig = plt.figure(figsize=(16,9))
-    ax = fig.add_subplot(projection="3d")
-    ax.set_xlabel(f"Driving Frequency [{xunits}]")
-    ax.set_ylabel(f"Rabi Frequency [MHz]")
-    ax.set_zlabel("Excited State Probability")
-    ax.set_title(title)
-    v = vs/ω0
-    Ωx = Ωxs/ω0
-    v, Ωx = np.meshgrid(v,Ωx)
-    print(v[:5,:5])
-    print(Ωx[:5, :5])
+    # vmin = np.min(vs) / ω0
+    # vmax = np.max(vs) / ω0
+    # Ωxs = data.attrs.get("Ωx")
+    # fig = plt.figure(figsize=(16,9))
+    # ax = fig.add_subplot(projection="3d")
+    # ax.set_xlabel(f"Driving Frequency [{xunits}]")
+    # ax.set_ylabel(f"Rabi Frequency [MHz]")
+    # ax.set_zlabel("Excited State Probability")
+    # ax.set_title(title)
+    # v = vs/ω0
+    # Ωx = Ωxs/ω0
+    # v, Ωx = np.meshgrid(v,Ωx)
+    # print(v[:5,:5])
+    # print(Ωx[:5, :5])
     # for key, rabifrequency in data.items():
     #     dataset = data[key]
     #     rabiF = rabifrequency.attrs.get("Ωx")
@@ -86,18 +86,18 @@ if __name__ == "__main__":
     #     totalProbability=False,
     #     excitedstate=True
     # )
-    plotProbability(
-        filename="TLS-data.h5",
-        group=group,
-        runname=runname,
-        Ωx="Ωx=100.0 M",
-        v=5.0e9,
-        title="Ωx=100.0 MHz",
-        xunits="s",
-        totalProbability=False,
-        excitedstate=True,
-        save=True
-    )
+    # plotProbability(
+    #     filename="TLS-data.h5",
+    #     group=group,
+    #     runname=runname,
+    #     Ωx="Ωx=100.0 M",
+    #     v=5.0e9,
+    #     title="Ωx=100.0 MHz",
+    #     xunits="s",
+    #     totalProbability=False,
+    #     excitedstate=True,
+    #     save=True
+    # )
     # plotMaxProbabilities(
     #     filename="TLS-data.h5",
     #     group=group,
@@ -113,3 +113,12 @@ if __name__ == "__main__":
     #     title=f"Frequency Sweep Rabi Frequency=60MHz",
     #     xunits="GHz"
     # )
+    plotProbabilities_Sweep_TwoField(filename,
+                                     group,
+                                     runname,
+                                     title="δv Sweep Excited State",
+                                     xunits="s",
+                                     totalProbability=False,
+                                     groundstate=False,
+                                     spacing=4)
+
