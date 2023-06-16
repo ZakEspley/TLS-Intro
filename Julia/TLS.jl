@@ -10,6 +10,7 @@ import Dates as DT
 import HDF5 as h5
 using Base.Threads
 using ProgressBars
+using Printf
 
 Sx = 1/2 * [0 1; 
             1 0]
@@ -53,6 +54,7 @@ function prefix(x, digits=nothing)
         return "$(value) (prefix)"
     else
         return "$(round(value;digits=digits)) $(prefix)"
+#         return @sprintf()
     end
 end
 
@@ -63,6 +65,17 @@ function HMaker(ω0::Float64, v::Float64, ω::Float64, Ωx::Float64, Ωz::Float6
     Ωz = Ωz/ω0
     function H(t::Float64)
         return -(ω - v) * Sz - Ωx * Sx - 2 * Ωz * cos(v * t) * Sz - Ωx * (Sp * exp(-2im * v * t) + Sm * exp(2im * v * t))
+    end
+    return H
+end
+
+function H2Maker(ω0::Float64, vp::Float64, δv::Float64, ω::Float64, Ωx::Float64)::Function
+    δv = δv/ω0
+    vp = vp/ω0
+    ω = ω/ω0
+    Ωx = Ωx/ω0
+    function H(t::Float64)
+        return -(ω - vp) * Sz - 2 * Ωx * cos(δv * t) * Sx
     end
     return H
 end
@@ -197,6 +210,44 @@ function FrequencyRabiSweepSimulation(
     close(data)
 end
 
+function FrequencyShiftSweepSimulation(
+    ω0::Float64,
+    ω::Float64,
+    vp::Float64,
+    Ωx::Float64,
+    dt::Float64,
+    tmax::Float64,
+    δvmin::Float64,
+    δvmax::Float64,
+    nδv ::Int64,
+    filename::String = "TLS-data.h5",
+    compression::Int64 = 7,
+    simulation_method::Function = RungeKuttaTimeEvolve
+)
+    data = h5.h5open(filename, "cw")
+    frequencies = range(δvmin, δvmax, nδv)
+    group, run = createRun(data)
+    h5.write_attribute(run, "dt", dt)
+    h5.write_attribute(run, "tmax", tmax)
+    h5.write_attribute(run, "ω0", ω0)
+    h5.write_attribute(run, "ω", ω)
+    h5.write_attribute(run, "Ωx", Ωx)
+    h5.write_attribute(run, "δv", Array(frequencies))
+    dt = dt*ω0
+    tmax = tmax*ω0
+
+    @threads for δv in ProgressBar(frequencies)
+#         rabiSet = h5.create_group(run, "δv=$(prefix(δv,4))Hz")
+#         h5.write_attribute(rabiSet, "δv", δv)
+        H = H2Maker(ω0, vp, δv, ω, Ωx)
+        probability_amplitudes  = simulation_method(H, dt, tmax)
+        dsName = "δv=$(prefix(δv,4))Hz"
+        run[dsName] = probability_amplitudes
+        h5.write_attribute(run[dsName], "Ωx", Ωx)
+        h5.write_attribute(run[dsName], "δv", δv)
+    end
+    close(data)
+end
 
 
 # Default Frequency in Hz
@@ -204,9 +255,9 @@ end
 #Resonant Frequency in Hz
 ω = 5e9
 #Time step in seconds
-dt = 50e-12
+dt = 100e-12
 #Time to run for in seconds
-tmax = 600e-9
+tmax = 200e-9
 # Rabi Frequency in Hz
 # Ωx = 63e6
 Ωxmin = 10e6
@@ -221,6 +272,12 @@ vmax = 5.2e9
 # Number of frequencies
 nFrequencies = 7
 
+# Settings for H2 simulation
+δvmin =  50e6
+δvmax = 60e6
+Ωx = 63.3e6
+nδv = 3
+vp = 5e9
 # FrequencySweepSimulation(
 #     ω0,
 #     ω,
@@ -233,17 +290,29 @@ nFrequencies = 7
 #     Ωz
 # )
 
-FrequencyRabiSweepSimulation(
-    ω0,
-    ω,
-    vmin,
-    vmax,
-    nFrequencies,
-    dt,
-    tmax,
-    Ωxmin,
-    Ωxmax,
-    nΩx,
-    Ωz;
-    simulation_method=TimeOrderedHeisenbergTimeEvolve
+# FrequencyRabiSweepSimulation(
+#     ω0,
+#     ω,
+#     vmin,
+#     vmax,
+#     nFrequencies,
+#     dt,
+#     tmax,
+#     Ωxmin,
+#     Ωxmax,
+#     nΩx,
+#     Ωz;
+#     simulation_method=TimeOrderedHeisenbergTimeEvolve
+# )
+
+FrequencyShiftSweepSimulation(
+     ω0,
+     ω,
+     vp,
+     Ωx,
+     dt,
+     tmax,
+     δvmin,
+     δvmax,
+     nδv
 )
